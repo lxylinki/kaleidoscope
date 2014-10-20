@@ -1,0 +1,28 @@
+lc_samp.c: In function ‘collect_hostname’:
+lc_samp.c:49:5: warning: format ‘%s’ expects argument of type ‘char *’, but argument 3 has type ‘char (*)[80]’ [-Wformat=]
+     sscanf(temp_name, "%s %*s", &host_name); 
+     ^
+lc_samp.c: In function ‘collect_disk’:
+lc_samp.c:180:14: warning: use of assignment suppression and length modifier together in gnu_scanf format [-Wformat=]
+              sscanf(diskinfo,"%*s %*ld %*ld %ld", &tmp);
+              ^
+lc_samp.c:180:14: warning: use of assignment suppression and length modifier together in gnu_scanf format [-Wformat=]
+lc_samp.c: In function ‘collect_procs’:
+lc_samp.c:195:5: warning: implicit declaration of function ‘get_nprocs’ [-Wimplicit-function-declaration]
+     return get_nprocs();
+     ^
+lc_samp.c: In function ‘collect_nicload’:
+lc_samp.c:255:13: warning: implicit declaration of function ‘sleep’ [-Wimplicit-function-declaration]
+             sleep(interval);
+             ^
+lc_samp.c: In function ‘find_MAC_addr’:
+lc_samp.c:321:9: warning: format ‘%s’ expects argument of type ‘char *’, but argument 3 has type ‘char (*)[80]’ [-Wformat=]
+         sscanf(mac, "%*s %*s %*s %*s %s", &macaddr); 
+         ^
+lc_samp.c:330:9: warning: format ‘%s’ expects argument of type ‘char *’, but argument 3 has type ‘char (*)[80]’ [-Wformat=]
+         sscanf(mac, "%*s %s", &macaddr); 
+         ^
+lc_samp.c: In function ‘main’:
+lc_samp.c:470:16: warning: variable ‘my_time’ set but not used [-Wunused-but-set-variable]
+     struct tm* my_time;
+                ^

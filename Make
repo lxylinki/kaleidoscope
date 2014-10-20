@@ -1,0 +1,11 @@
+#!/bin/bash
+if ["$OPTARG" == ""]; then
+    echo "Usage: ./Make -f filename"
+fi
+
+while getopts "f:" filename
+do
+    make $OPTARG 2> make_err
+    grep --color --ignore-case "error" ./make_err
+   # grep --color --ignore-case "warning" ./make_err
+done
