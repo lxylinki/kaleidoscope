@@ -1,0 +1,5 @@
+#!/bin/bash
+gcc -c ./*.c;
+rm main.o;
+ar rs libiperf.a ./*.o;
+rm ./*.o;

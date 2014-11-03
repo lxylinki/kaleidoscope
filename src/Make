@@ -8,4 +8,5 @@ do
     make $OPTARG 2> make_err
     grep --color --ignore-case "error" ./make_err
    # grep --color --ignore-case "warning" ./make_err
+    rm make_err
 done

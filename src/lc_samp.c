@@ -264,74 +264,6 @@ float collect_nicload() {
     return datarate;
 }
 
-char* find_MAC_addr()
-{
-    static char macaddr[MAXLINE];
-    static char getmaccmd1[MAXLINE];
-    static char getmaccmd2[MAXLINE];
-    
-    char* nicname; 
-    nicname = get_NIC_name();
-    
-    char* getmac_prefix = "ifconfig ";
-    // redhad cmd
-    char* getmac_suffix1 = " | grep 'ether'";
-    // debian cmd
-    char* getmac_suffix2 = " | grep 'HWaddr'";
-
-    strncpy( getmaccmd1, getmac_prefix, strlen(getmac_prefix) );
-    strncpy( getmaccmd2, getmac_prefix, strlen(getmac_prefix) );
-
-    strncat( getmaccmd1, nicname, strlen(nicname) );
-    strncat( getmaccmd2, nicname, strlen(nicname) );
-    
-    /* concatenate suffix */
-    strncat( getmaccmd1, getmac_suffix1, strlen(getmac_suffix1) );
-    strncat( getmaccmd2, getmac_suffix2, strlen(getmac_suffix2) );
-    //printf("MAC addr cmd1: %s\n", getmaccmd1);
-    //printf("MAC addr cmd2: %s\n", getmaccmd2);
-   
-    FILE* info;
-    char mac[MAXLINE];
-    
-    if( (info = popen( getmaccmd1,"r")) == NULL )
-    {
-        fprintf(stderr, "popen failed.");
-    }
-    
-    if( fgets( mac, MAXLINE, info) == NULL )
-    {
-        //fprintf(stderr, "try cmd type2 ..\n");
-
-        if( (info = popen( getmaccmd2,"r")) == NULL )
-        {
-            fprintf(stderr,"popen failed.");
-        }
-
-        if( fgets( mac, MAXLINE, info) == NULL )
-        {
-            fprintf(stderr, "fgets failed for cmd type2.");
-        }
-        
-        if( pclose(info) == -1 )
-        {
-            fprintf(stderr, "pclose failed.");
-        }
-    
-        sscanf(mac, "%*s %*s %*s %*s %s", &macaddr); 
-
-    }else
-    {
-        if( pclose(info) == -1 )
-        {
-            fprintf(stderr, "pclose failed.");
-        }
-    
-        sscanf(mac, "%*s %s", &macaddr); 
-    }
-    return macaddr;
-}
-
 float collect_cpu() {
     char* LOAD_CMD = "lscpu | grep 'CPU MHz'";
     FILE* info;
@@ -345,44 +277,6 @@ float collect_cpu() {
         fprintf(stderr, "fgets failed when get cpu load.");
     }
     sscanf(temp_info, "%*s %*s %f", &current_load);
-    if (pclose(info) == -1) {
-        fprintf(stderr, "pclose failed when get cpu load.");
-    }
-    return current_load;
-}
-
-float collect_max_cpu() {
-    char* LOAD_CMD = "lscpu | grep 'CPU max MHz'";
-    FILE* info;
-    float current_load;
-    char temp_info[MAXLINE];
-
-    if ((info = popen(LOAD_CMD, "r")) == NULL) {
-        fprintf(stderr, "popen failed when get cpu load.");
-    }
-    if ((fgets(temp_info, MAXLINE, info)) == NULL) {
-        fprintf(stderr, "fgets failed when get cpu load.");
-    }
-    sscanf(temp_info, "%*s %*s %*s %f", &current_load);
-    if (pclose(info) == -1) {
-        fprintf(stderr, "pclose failed when get cpu load.");
-    }
-    return current_load;
-}
-
-float collect_min_cpu() {
-    char* LOAD_CMD = "lscpu | grep 'CPU min MHz'";
-    FILE* info;
-    float current_load;
-    char temp_info[MAXLINE];
-
-    if ((info = popen(LOAD_CMD, "r")) == NULL) {
-        fprintf(stderr, "popen failed when get cpu load.");
-    }
-    if ((fgets(temp_info, MAXLINE, info)) == NULL) {
-        fprintf(stderr, "fgets failed when get cpu load.");
-    }
-    sscanf(temp_info, "%*s %*s %*s %f", &current_load);
     if (pclose(info) == -1) {
         fprintf(stderr, "pclose failed when get cpu load.");
     }
@@ -424,7 +318,7 @@ struct tm* collect_currenttime() {
     static struct tm *nowtime;
     time_t now = time(NULL);
     nowtime = localtime(&now);
-    printf("%s\n", asctime(nowtime));
+    printf("%s", asctime(nowtime));
     return nowtime;
 }
 
@@ -445,49 +339,46 @@ MYSQL_TIME* get_mysqltime(struct tm* nowtime) {
 int main() {
     char* my_name;
     my_name = collect_hostname();
+    printf("my name is %s\n", my_name);
 
     char my_addr[NI_MAXHOST];
     get_IP_addr(my_addr, AF_INET);
+    printf("my v4 addr is %s\n", my_addr);
+    
+    char my_addr6[NI_MAXHOST];
+    get_IP_addr(my_addr6, AF_INET6);
+    printf("my v6 addr is %s\n", my_addr6);
     
     char* my_nic;
     my_nic = get_NIC_name();
+    printf("my network card is %s\n", my_nic);
     
     long my_ram;
     my_ram = collect_ram();
+    printf("avail ram: %dkB\n", my_ram);
 
     int my_procs;
     my_procs = collect_procs();
+    printf("processors: %d\n", my_procs);
 
     long my_disk;
     my_disk = collect_disk();
+    printf("disk space: %d\n", my_disk);
 
     float nic_load;
     nic_load = collect_nicload();
-
-    char* my_MAC;
-    my_MAC = find_MAC_addr();
+    printf("data rate: %.2f\n", nic_load);
 
     struct tm* my_time;
     my_time = collect_currenttime();
 
-    printf("HOST\t%s\nIP(v4)\t%s\nNIC\t%s\nRAM\t%ldkB\nDISK\t%ldkB\nPROCS\t%d\nNIC_LOAD\t%.2fkB/s\nMAC\t%s\n", 
-            my_name, my_addr, my_nic, my_ram, my_disk, my_procs, nic_load, my_MAC);
-    
     float current_cpu;
     current_cpu = collect_cpu();
     printf("CPU\t%.2fMHz\n", current_cpu);
 
-    float max_cpu;
-    max_cpu = collect_max_cpu();
-    printf("MAX_CPU\t%.2fMHz\n", max_cpu);
-
-    float min_cpu;
-    min_cpu = collect_min_cpu();
-    printf("MIN_CPU\t%.2fMHz\n", min_cpu);
-
-    float cpu_load;
-    cpu_load = (current_cpu/max_cpu);
-    printf("CPU_LOAD\t%.2f\n", cpu_load);
+    float current_temp;
+    current_temp = collect_cputemp();
+    printf("CPU\t%.2fC\n", current_temp);
     
     return EXIT_SUCCESS;
 }

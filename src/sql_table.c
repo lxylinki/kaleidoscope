@@ -1,7 +1,8 @@
+#include<my_global.h>
 #include<my_sys.h>
 #include<mysql.h>
 #include<stdlib.h>
-#include"sql_admin.h"
+#include"../include/sql_admin.h"
 
 /* create user table */
 #define CREATE_USER_TABLE "create table user( username varchar(80), email varchar(80), primary key(email) )" 
@@ -25,7 +26,7 @@
 #define CREATE_SIGNEDBY_TABLE "create table signed_by( label varchar(80),format varchar(80), email varchar(80), primary key(label, format) )"
 
 /* create server table */
-#define CREATE_SERVER_TABLE "create table server( host_name varchar(80),CPU_scale float, avail_RAM int, avail_disk int, CPU_temp float,NIC_load float, curr_time DATETIME, MAC_addr varchar(80),CPU_capacity float,core_num int, IP_addr varchar(80), primary key( curr_time, MAC_addr ) )"
+#define CREATE_SERVER_TABLE "create table server( host_name varchar(80),CPU_scale float, avail_RAM int, avail_disk int, CPU_temp float,NIC_load float, curr_time DATETIME, IPv6_addr varchar(80),CPU_capacity float,core_num int, IP_addr varchar(80), primary key( curr_time, IPv6_addr ) )"
 
 /* create exec_on table, relate program to server */
 #define CREATE_EXECON_TABLE "create table exec_on( prog_ID int,host_name varchar(80), curr_time DATETIME, primary key( prog_ID, curr_time ) )"
@@ -37,7 +38,7 @@
 #define CREATE_PEERCONN_TABLE "create table peer_connect( host1_name varchar(80), host1_ip varchar(80), host2_name varchar(80), host2_ip varchar(80), avail_BW float, curr_time DATETIME, primary key(host1_ip, host2_ip, curr_time))"
 
 
-void createtables(char *host_name) {
+void create_tables(char *host_name) {
     /* pointer to connection handler */
     static MYSQL *conn; 
 
@@ -171,6 +172,6 @@ void createtables(char *host_name) {
 }
 
 int main() {
-    createtables(my_host_name);
+    create_tables(my_host_name);
     return EXIT_SUCCESS;
 }
