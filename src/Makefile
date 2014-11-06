@@ -32,6 +32,13 @@ sql_table: sql_table.o
 bw_funcs: bw_funcs.c
 	${CC} ${CFLAGS} -L${LIB_DIR} -o ${EXE_DIR}bw_funcs bw_funcs.c ${LIB_DIR}libiperf.a
 
+peer_conn.o: peer_conn.c
+	${CC} ${SQL_INCS} -c peer_conn.c
+
+peer_conn.a: peer_conn.o
+	${AR} ${AROPTS} ${LIB_DIR}peer_conn.a peer_conn.o
+
+
 clean:
 	rm -f lc_samp 
 	rm -f sql_table

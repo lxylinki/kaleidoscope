@@ -8,37 +8,28 @@
 #define CREATE_USER_TABLE "create table user( username varchar(80), email varchar(80), primary key(email) )" 
 
 /* create task table, type 1: workflow task, type 0: independent task */
-#define CREATE_TASK_TABLE "create table task( task_ID varchar(80),task_type int, timeslot_len int, curr_time DATETIME, exec_status float, primary key(task_ID) )" 
+#define CREATE_TASK_TABLE "create table task( email varchar(80), task_ID varchar(80),task_type int, sample_interval int, curr_time DATETIME, exec_status float, primary key(task_ID), foreign key(email) references user(email) )" 
 
 /* create program table */
-#define CREATE_PROGRAM_TABLE "create table program( prog_ID varchar(80), curr_time DATETIME, exec_status float, parallism float, primary key(prog_ID) )"
+#define CREATE_PROGRAM_TABLE "create table program( prog_ID varchar(80), task_ID varchar(80), curr_time DATETIME, exec_status float, parallism float, primary key(prog_ID), foreign key (task_ID) references task(task_ID) )"
 
-/* create contains table, relate program to task */
-#define CREATE_CONTAINS_TABLE "create table contains(task_ID varchar(80), prog_ID varchar(80), primary key(prog_ID) )"
-
-/* create owns table, relate task to user */
-#define CREATE_OWNS_TABLE "create table owns( task_ID varchar(80),email varchar(80), primary key(task_ID) )"
-
-/* create dynamic_data table  */
-#define CREATE_DDATA_TABLE "create table dynamic_data( srcProg_ID int,dstProg_ID int, label varchar(80), volume int, format varchar(80),curr_time DATETIME, primary key(label, format, curr_time) )"
-
-/* create signed_by table, relate data to user */
-#define CREATE_SIGNEDBY_TABLE "create table signed_by( label varchar(80),format varchar(80), email varchar(80), primary key(label, format) )"
+/* create data table  */
+#define CREATE_DATA_TABLE "create table data( email varchar(80), srcProg_ID int,dstProg_ID int, label varchar(80), volume int, format varchar(80),curr_time DATETIME, primary key(label, format, curr_time), foreign key(email) references user(email) )"
 
 /* create server table */
-#define CREATE_SERVER_TABLE "create table server( host_name varchar(80),CPU_scale float, avail_RAM int, avail_disk int, CPU_temp float,NIC_load float, curr_time DATETIME, IPv6_addr varchar(80),CPU_capacity float,core_num int, IP_addr varchar(80), primary key( curr_time, IPv6_addr ) )"
+#define CREATE_SERVER_TABLE "create table server( host_name varchar(80),CPU_scale float, avail_RAM int, avail_disk int, CPU_temp float,NIC_load float, curr_time DATETIME, IPv6_addr varchar(80),CPU_capacity float,core_num int, IP_addr varchar(80), primary key( host_name, curr_time, IPv6_addr ) )"
 
 /* create exec_on table, relate program to server */
-#define CREATE_EXECON_TABLE "create table exec_on( prog_ID int,host_name varchar(80), curr_time DATETIME, primary key( prog_ID, curr_time ) )"
+#define CREATE_EXECON_TABLE "create table exec_on( prog_ID int, host_name varchar(80), curr_time DATETIME, primary key( prog_ID, curr_time ), foreign key (host_name) references server (host_name) )"
 
-/* create stored_on table */
-#define CREATE_STOREDON_TABLE "create table stored_on( label varchar(80),format varchar(80), host_name varchar(80), curr_time DATETIME,primary key( label, format, curr_time) ) "
+/* create stored_on table, relate data piece to server */
+#define CREATE_STOREDON_TABLE "create table stored_on( label varchar(80),format varchar(80), host_name varchar(80), curr_time DATETIME,primary key( label, format, curr_time), foreign key (host_name) references server(host_name) ) "
 
 /* create peer_connect table */
-#define CREATE_PEERCONN_TABLE "create table peer_connect( host1_name varchar(80), host1_ip varchar(80), host2_name varchar(80), host2_ip varchar(80), avail_BW float, curr_time DATETIME, primary key(host1_ip, host2_ip, curr_time))"
+#define CREATE_PEERCONN_TABLE "create table peer_connect( peer_name varchar(80), peer_ip varchar(80), avail_BW float, curr_time DATETIME, primary key(peer_ip, curr_time))"
 
 
-void create_tables(char *host_name) {
+void create_tables(char* host_name) {
     /* pointer to connection handler */
     static MYSQL *conn; 
 
@@ -108,32 +99,10 @@ void create_tables(char *host_name) {
         exit(1);
     }
 
-    /* create contains table */
-    if( mysql_query(conn, CREATE_CONTAINS_TABLE) )
-    {
-        fprintf(stderr, "create contains table failed: \n%s\n", mysql_error(conn));
-        exit(1);
-    }
-
-    /* create owns table */
-    if( mysql_query(conn, CREATE_OWNS_TABLE) )
-    {
-        fprintf(stderr, "create owns table failed: \n%s\n", mysql_error(conn));
-        exit(1);
-    }
-
-
     /* create dynamic_data table */
-    if( mysql_query(conn, CREATE_DDATA_TABLE) )
+    if( mysql_query(conn, CREATE_DATA_TABLE) )
     {
         fprintf(stderr, "create dynamic_data table failed: \n%s\n", mysql_error(conn));
-        exit(1);
-    }
-
-    /* create signed_by table */
-    if( mysql_query(conn, CREATE_SIGNEDBY_TABLE) )
-    {
-        fprintf(stderr, "create signed_by table failed: \n%s\n", mysql_error(conn));
         exit(1);
     }
 

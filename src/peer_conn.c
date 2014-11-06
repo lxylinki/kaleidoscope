@@ -1,3 +1,6 @@
+#include <my_global.h>
+#include <my_sys.h>
+#include <mysql.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -7,6 +10,9 @@
 #include <netinet/ip.h>
 #include <time.h>
 #include <string.h>
+
+#include "../include/peer_conn.h"
+#include "../include/sql_admin.h"
 
 #define CPORT "20121" /* progressive port number: sending periodically signals */
 #define SPORT "20132" /* passive port number: listening for peers and send responses */
@@ -20,11 +26,9 @@
 /* server table is updated most frequently, using prepared statement */ 
 #define PEERCONN_INSERT_STMT "insert into peer_connect( host1_name, host1_ip, host2_name, host2_ip, avail_BW, curr_time ) values( ?,?,?,?,?,? )"
 
-/* number of columns in peer_conn table */
-static int peerconn_columns = 6; 
 
 /* return readable string presentation of network address */
-char *
+char*
 socket_ntop( const struct sockaddr *sa )
 {
     /* INET_ADDRSTRLEN = 16 */
@@ -52,7 +56,7 @@ socket_ntop( const struct sockaddr *sa )
 
 
 /* return an addrinfo structure from hostname, return NULL if error */
-struct addrinfo *
+struct addrinfo*
 get_hostaddr( const char *hostname, const char *service, int protocol_family, int socket_type )
 {
     int result;
@@ -208,7 +212,7 @@ listening_socket( const char *serv )
 }
 
 /* extract peer hostname/ip from peer message/info */
-char *
+char*
 extract_peername( const char *msginfo, char *name, int maxlen )
 {
     /* make a local copy */
@@ -488,9 +492,19 @@ sending_process( const char *peerhostname, int interval )
     close(sndsock);
 }
 
-/* start the receiving process */
 void 
 receiving_process()
+{
+    int rcvsock;
+    rcvsock = listening_socket( SPORT );
+    /* start listening and fill in peer_conn table */
+    start_receiving( rcvsock );
+    close(rcvsock);
+}
+
+/* start the receiving process */
+void 
+receiving_process_SQL()
 {
     /* pointer to connection handler */
     static MYSQL *conn; 
