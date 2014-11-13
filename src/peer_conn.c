@@ -11,21 +11,21 @@
 #include <time.h>
 #include <string.h>
 
-#include "../include/peer_conn.h"
+#include "../include/lc_samp.h"
 #include "../include/sql_admin.h"
 
 #define CPORT "20121" /* progressive port number: sending periodically signals */
-#define SPORT "20132" /* passive port number: listening for peers and send responses */
-#define MCAST_ADDR "239.225.0.1" /* site-local multicast address: 239.255.0.0 to 239.255.255.255 */
 
-#define SND_interval 30 /* number of seconds between signals */
+#define SPORT "20132" /* passive port number: listening for peers and send responses */
+//#define MCAST_ADDR "239.225.0.1" /* site-local multicast address: 239.255.0.0 to 239.255.255.255 */
+
 #define portlen 8 /* length of string to store port */
 
+#define MAXLINE 80
+
 /* Reference: Unix Network Programming www.unpbook.com/src.html */
-
 /* server table is updated most frequently, using prepared statement */ 
-#define PEERCONN_INSERT_STMT "insert into peer_connect( host1_name, host1_ip, host2_name, host2_ip, avail_BW, curr_time ) values( ?,?,?,?,?,? )"
-
+#define PEERCONN_INSERT_STMT "insert into peer_connect( peer_name, peer_ip, avail_BW, curr_time ) values( ?,?,?,? )"
 
 /* return readable string presentation of network address */
 char*
@@ -57,7 +57,7 @@ socket_ntop( const struct sockaddr *sa )
 
 /* return an addrinfo structure from hostname, return NULL if error */
 struct addrinfo*
-get_hostaddr( const char *hostname, const char *service, int protocol_family, int socket_type )
+get_hostaddr( const char* hostname, const char* service, int protocol_family, int socket_type )
 {
     int result;
     struct addrinfo hints, *res;
@@ -82,7 +82,7 @@ get_hostaddr( const char *hostname, const char *service, int protocol_family, in
 
 
 /* return a sending socket to desthost bind to local CPORT
- * TODO: desthostname is selected from peer_connect table
+ * TODO: desthostname is received from peer signal
  */
 int 
 sending_socket( const char *desthostname, const char *serv, struct sockaddr **saptr, socklen_t *len ) 
@@ -140,7 +140,7 @@ sending_socket( const char *desthostname, const char *serv, struct sockaddr **sa
 
 /* compose signal to send (localhost name:port, pid) and send to peers sockaddr, which is a multicast address */
 void 
-start_announcing( int sndsock, struct sockaddr *peers_addr, socklen_t peersa_len )
+start_announcing( int sndsock, struct sockaddr *peers_addr, int interval, socklen_t peersa_len )
 {
     int sentbytes;
     char myinfo[MAXLINE];
@@ -164,7 +164,7 @@ start_announcing( int sndsock, struct sockaddr *peers_addr, socklen_t peersa_len
         }else
         {
             printf("sent a signal of %d bytes ...\n", sentbytes);
-            sleep(SND_interval);
+            sleep(interval);
         }
     }
 }
@@ -266,12 +266,13 @@ start_receiving( int rcvsock )
             exit(1);
         }
         peermsg[rcvbytes] = '\0'; /* null terminate */
+        printf("Received message %s\n", peermsg);
     
         char myip[NI_MAXHOST]; 
         char *peerip; /* the peer ip */
         char peername[MAXLINE]; /* the peer hostname */
 
-        if( getIPaddr( myip, AF_INET ) == NULL )
+        if( get_IP_addr( myip, AF_INET ) == NULL )
         {
             printf("%s\n", "error when getting localhost ip address");
             exit(1);
@@ -302,6 +303,7 @@ start_receiving( int rcvsock )
         //prepare_exec_peerconninsert(conn); 
     }
 }
+
 
 /* a function ref from unp converting inet family to int */
 int
@@ -336,149 +338,7 @@ sockfd_to_family(int sockfd)
 /* end sockfd_to_family */
 
 
-/* a function ref directly from unp for joining multicast group */
-int
-mcast_join( int sockfd, const struct sockaddr *grp, socklen_t grplen, const char *ifname, u_int ifindex )
-{
-#ifdef MCAST_JOIN_GROUP
-	struct group_req req;
-
-	if (ifindex > 0) 
-    {
-		req.gr_interface = ifindex;
-
-	} else if (ifname != NULL) 
-    {
-		if ( (req.gr_interface = if_nametoindex(ifname)) == 0) 
-        {
-			errno = ENXIO;	/* i/f name not found */
-			return(-1);
-		}
-	} else
-    {
-		req.gr_interface = 0;
-    }
-
-	if (grplen > sizeof(req.gr_group)) 
-    {
-		errno = EINVAL;
-		return -1;
-	}
-
-	memcpy(&req.gr_group, grp, grplen);
-	return (setsockopt(sockfd, family_to_level(grp->sa_family), MCAST_JOIN_GROUP, &req, sizeof(req)));
-#else
-/* end mcast_join1 */
-
-/* include mcast_join2 */
-	switch (grp->sa_family) 
-    {
-	case AF_INET: 
-    {
-		struct ip_mreq		mreq;
-		struct ifreq		ifreq;
-
-		memcpy(&mreq.imr_multiaddr,
-			   &((const struct sockaddr_in *) grp)->sin_addr,
-			   sizeof(struct in_addr));
-
-		if ( ifindex > 0 ) 
-        {
-			if ( if_indextoname(ifindex, ifreq.ifr_name) == NULL ) 
-            {
-				errno = ENXIO;	/* i/f index not found */
-				return(-1);
-			}
-			goto doioctl;
-
-		} else if (ifname != NULL) 
-        {
-			strncpy(ifreq.ifr_name, ifname, IFNAMSIZ);
-doioctl:
-			if (ioctl(sockfd, SIOCGIFADDR, &ifreq) < 0)
-				return(-1);
-
-			memcpy(&mreq.imr_interface,
-				   &((struct sockaddr_in *) &ifreq.ifr_addr)->sin_addr,
-				   sizeof(struct in_addr));
-		} else
-
-			mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-
-		return( setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-						  &mreq, sizeof(mreq)) );
-	}
-/* end mcast_join2 */
-
-/* include mcast_join3 */
-#ifdef	IPV6
-#ifndef	IPV6_JOIN_GROUP		/* APIv6 compatibility */
-#define	IPV6_JOIN_GROUP		IPV6_ADD_MEMBERSHIP
-#endif
-	case AF_INET6: 
-    {
-		struct ipv6_mreq	mreq6;
-
-		memcpy(&mreq6.ipv6mr_multiaddr,
-			   &((const struct sockaddr_in6 *) grp)->sin6_addr,
-			   sizeof(struct in6_addr));
-
-		if (ifindex > 0) 
-        {
-			mreq6.ipv6mr_interface = ifindex;
-		} else if (ifname != NULL) 
-        {
-			if ( (mreq6.ipv6mr_interface = if_nametoindex(ifname)) == 0) 
-            {
-				errno = ENXIO;	/* i/f name not found */
-				return(-1);
-			}
-		} else
-			
-            mreq6.ipv6mr_interface = 0;
-
-		return(setsockopt(sockfd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-						  &mreq6, sizeof(mreq6)));
-	}
-#endif
-
-	default:
-		errno = EAFNOSUPPORT;
-		return(-1);
-	}
-#endif
-}
-
-/* a function ref directly from unp to set the multicast loopback option */
-int
-mcast_set_loop(int sockfd, int onoff)
-{
-	switch (sockfd_to_family(sockfd)) {
-	case AF_INET: {
-		u_char flag;
-
-		flag = onoff;
-		return(setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_LOOP,
-						  &flag, sizeof(flag)));
-	}
-
-#ifdef	IPV6
-	case AF_INET6: {
-		u_int flag;
-
-		flag = onoff;
-		return(setsockopt(sockfd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-						  &flag, sizeof(flag)));
-	}
-#endif
-
-	default:
-		errno = EAFNOSUPPORT;
-		return(-1);
-	}
-}
-
-/* the sending process: the peerhostname may be a multicast address */
+/* the sending process: the peerhostname could be a multicast address */
 void 
 sending_process( const char *peerhostname, int interval )
 {
@@ -488,7 +348,7 @@ sending_process( const char *peerhostname, int interval )
 
     /* fill in the info */
     sndsock = sending_socket( peerhostname, SPORT, &peeraddr, &salen );
-    start_announcing( sndsock, peeraddr, salen );
+    start_announcing( sndsock, peeraddr, interval, salen );
     close(sndsock);
 }
 
@@ -497,7 +357,6 @@ receiving_process()
 {
     int rcvsock;
     rcvsock = listening_socket( SPORT );
-    /* start listening and fill in peer_conn table */
     start_receiving( rcvsock );
     close(rcvsock);
 }
@@ -540,6 +399,7 @@ receiving_process_SQL()
 
     int rcvsock;
     rcvsock = listening_socket( SPORT );
+
     /* start listening and fill in peer_conn table */
     start_receiving( rcvsock );
     close(rcvsock);
@@ -550,19 +410,20 @@ receiving_process_SQL()
 
 }
 
-/* test using multicast MCAST_ADDR */
+
 void
-multicasting_process( const char *mymcastaddr, int interval )
+daemon_process( const char *peeraddr, int interval )
 {
     int sndsock, rcvsock;
     const int on = 1;
+
     socklen_t salen;
-    struct sockaddr *mcastaddr, *sarecv;
+    struct sockaddr *paddr, *sarecv;
 
     /* fill in the info */
-    sndsock = sending_socket( mymcastaddr, SPORT, &mcastaddr, &salen );
-    rcvsock = socket( mcastaddr->sa_family, SOCK_DGRAM, 0 );
+    sndsock = sending_socket( peeraddr, SPORT, &paddr, &salen );
 
+    rcvsock = socket( paddr->sa_family, SOCK_DGRAM, 0 );
     if( rcvsock < 0 )
     {
         perror("socket");
@@ -570,26 +431,22 @@ multicasting_process( const char *mymcastaddr, int interval )
     }
 
     setsockopt( rcvsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) );
-
     sarecv = malloc( salen );
-    memcpy( sarecv, mcastaddr, salen ); /* copy the mcast addrinfo to sarecv */
+    memcpy( sarecv, paddr, salen ); /* copy the peer addrinfo to sarecv */
     if( bind( rcvsock, sarecv, salen ) < 0 )
     {
-        perror("bind");
+        perror("receiving socket binding");
         exit(1);
     }
-
-    mcast_join( rcvsock, mcastaddr, salen, NULL, 0 ); /* let kernel choose interface: all interfaces */
-    
-    //TODO: mcast_set_loop( sndsock, 0 ); /* disable the loopback */
-    mcast_set_loop( sndsock, 1 ); /* enable the loopback for testing on localhost*/
 
     if( fork() == 0 )
     {
         start_receiving( rcvsock );
     }
 
-    start_announcing( sndsock, mcastaddr, salen );
-    close(rcvsock);
+    /* TODO need to include multiple peer addrs */
+    start_announcing( sndsock, paddr, interval, salen );
     close(sndsock);
+
+    close(rcvsock);
 }

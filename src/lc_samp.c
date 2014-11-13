@@ -51,7 +51,7 @@ char* collect_hostname() {
 }
 
 /* find the ipv4/6 address of active nic (AF_INET, AF_INET6) */
-void get_IP_addr(char *ip_addr, const int protocol_family) {
+char* get_IP_addr(char *ip_addr, const int protocol_family) {
     struct ifaddrs *ifaddr, *ifa;
     static char hostip[NI_MAXHOST];
 
@@ -99,7 +99,7 @@ void get_IP_addr(char *ip_addr, const int protocol_family) {
         printf("%s\n", "error when getting ip address");
         exit(EXIT_FAILURE);
     }
-    //return ip_addr;
+    return ip_addr;
 }
 
 /* find the first active NIC name: TODO there can be multiple active NICs */
@@ -336,6 +336,7 @@ MYSQL_TIME* get_mysqltime(struct tm* nowtime) {
     return &mytime;
 }*/
 
+/**
 int main() {
     char* my_name;
     my_name = collect_hostname();
@@ -345,8 +346,9 @@ int main() {
     get_IP_addr(my_addr, AF_INET);
     printf("my v4 addr is %s\n", my_addr);
     
-    char my_addr6[NI_MAXHOST];
-    get_IP_addr(my_addr6, AF_INET6);
+    char* my_addr6;
+    char container[NI_MAXHOST];
+    my_addr6 = get_IP_addr(container, AF_INET6);
     printf("my v6 addr is %s\n", my_addr6);
     
     char* my_nic;
@@ -381,4 +383,4 @@ int main() {
     printf("CPU\t%.2fC\n", current_temp);
     
     return EXIT_SUCCESS;
-}
+}*/

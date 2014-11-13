@@ -17,12 +17,6 @@ execs: lc_samp sql_table bw_funcs
 lc_samp.o: lc_samp.c
 	${CC} -c lc_samp.c
 
-lc_samp.a: lc_samp.o
-	${AR} ${AROPTS} ${LIB_DIR}lc_samp.a lc_samp.o
-
-lc_samp: lc_samp.c
-	${CC} ${CFLAGS} -o ${EXE_DIR}lc_samp lc_samp.c
-
 sql_table.o: sql_table.c
 	${CC} ${CFLAGS} ${SQL_INCS} -c sql_table.c
 
@@ -35,9 +29,12 @@ bw_funcs: bw_funcs.c
 peer_conn.o: peer_conn.c
 	${CC} ${SQL_INCS} -c peer_conn.c
 
-peer_conn.a: peer_conn.o
-	${AR} ${AROPTS} ${LIB_DIR}peer_conn.a peer_conn.o
 
+util_funcs.a: lc_samp.o peer_conn.o
+	${AR} ${AROPTS} ${LIB_DIR}util_funcs.a lc_samp.o peer_conn.o
+
+app_start: app_start.c
+	${CC} ${CFLAGS} ${SQL_INCS} -o ${EXE_DIR}app_start app_start.c ${LIB_DIR}util_funcs.a ${SQL_LIBS}
 
 clean:
 	rm -f lc_samp 

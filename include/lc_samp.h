@@ -3,7 +3,7 @@
 
 char* collect_hostname();
 
-void get_IP_addr(char* ip_addr, const int protocol_family);
+char* get_IP_addr(char* ip_addr, const int protocol_family);
 
 char* get_NIC_name();
 

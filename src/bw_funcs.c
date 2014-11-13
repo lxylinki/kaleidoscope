@@ -87,7 +87,7 @@ double bw_client( const char *peeraddr ){
         iperf_errexit( mytest, "error - %s", iperf_strerror(i_errno) );
 
     bw = iperf_get_bandwidth( mytest );
-    printf("Number of bytes per second: %f\n", bw);    
+    printf("Connection bandwidth: %.2fKB/s\n", (bw/1024));    
     iperf_free_test( mytest );
     return bw;
 }
@@ -102,7 +102,7 @@ int main( int argc, char *argv[] ){
 
     /* run the client side alg iterate through each remote peer recorded */
     //TODO: the peer hostname is selected from peer_connect table
-    bw_client("localhost");
+    bw_client("10.0.0.15");
     return 0;
 }
 
