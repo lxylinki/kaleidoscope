@@ -412,7 +412,7 @@ receiving_process_SQL()
 
 
 void
-daemon_process( const char *peeraddr, int interval )
+conn_process( const char *peeraddr, int interval )
 {
     int sndsock, rcvsock;
     const int on = 1;

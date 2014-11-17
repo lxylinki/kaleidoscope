@@ -1,28 +1,21 @@
-#include<time.h>
-#include<string.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<sys/socket.h>
-#include<net/if.h>
-#include<netdb.h>
-#include<ifaddrs.h>
+#include <my_global.h>
+#include <my_sys.h>
+#include <mysql.h>
+#include <time.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include "../include/lc_samp.h"
 
 #define MAXLINE 80
 
-/* result structure */
-typedef struct server_sample {
-    char* host_name;
-    char* ip_addr;
-    char* mac_addr;
-    float CPU_scale;
-    long avail_RAM;
-    long avail_disk;
-    float NIC_load;
-    float CPU_temp;
-    struct tm* curr_time;
-    float CPU_capacity;
-    int core_num;
-} server_sample;
+#define NIC_prefix "/sys/class/net/"
+#define NICrx_suffix "/statistics/rx_bytes" // received bytes
+#define NICtx_suffix "/statistics/tx_bytes" // transmitted bytes
 
 /* return local hostname */
 char* collect_hostname() {
@@ -132,7 +125,7 @@ char* get_NIC_name() {
 }
 
 /* RAM size */
-long int collect_ram() {
+long collect_ram() {
     FILE* info;
     long int ramsize;
     char raminfo[MAXLINE];
@@ -154,7 +147,7 @@ long int collect_ram() {
 }
 
 /* disk vol */
-long int collect_disk() {
+long collect_disk() {
     FILE* info;
     static char diskinfo[MAXLINE];
     long int diskspace = 0;
@@ -199,17 +192,11 @@ void find_NIC_dir(char* rxstats, char* txstats) {
     char* nic_name;
     nic_name = get_NIC_name();
     
-    char* NIC_prefix = "/sys/class/net/";
-    // received bytes
-    char* NICrx_suffix = "/statistics/rx_bytes";
-    // transmitted bytes
-    char* NICtx_suffix = "/statistics/tx_bytes";
-
-    strncpy(rxstats, NIC_prefix, strlen(NIC_prefix));
+    strncpy(rxstats, NIC_prefix, sizeof(NIC_prefix));
     strncat(rxstats, nic_name, strlen(nic_name));
     strncat(rxstats, NICrx_suffix, strlen(NICrx_suffix));
     
-    strncpy(txstats, NIC_prefix, strlen(NIC_prefix));
+    strncpy(txstats, NIC_prefix, sizeof(NIC_prefix));
     strncat(txstats, nic_name, strlen(nic_name));
     strncat(txstats, NICtx_suffix, strlen(NICtx_suffix));
     //printf("%s\n%s\n", rxstats, txstats);
@@ -219,6 +206,7 @@ void find_NIC_dir(char* rxstats, char* txstats) {
 float collect_nicload() {
     static char rxstats[MAXLINE];
     static char txstats[MAXLINE];
+
     find_NIC_dir(rxstats, txstats);
 
     int interval = 2; // the time interval in seconds
@@ -323,9 +311,14 @@ struct tm* collect_currenttime() {
 }
 
 
-/* convert into mysql time
-MYSQL_TIME* get_mysqltime(struct tm* nowtime) {
+/* convert into mysql time */
+MYSQL_TIME* get_mysqltime() {
     static MYSQL_TIME mytime; 
+    
+    struct tm *nowtime;
+    time_t now = time(NULL);
+    nowtime = localtime(&now);
+    
     mytime.year = nowtime->tm_year + 1900;
     mytime.month = nowtime->tm_mon + 1;
     mytime.day = nowtime->tm_mday;
@@ -333,8 +326,41 @@ MYSQL_TIME* get_mysqltime(struct tm* nowtime) {
     mytime.minute = nowtime->tm_min;
     mytime.second = nowtime->tm_sec;
     mytime.neg = nowtime->tm_isdst;
+    
     return &mytime;
-}*/
+}
+
+/* for SQL connection */
+server_row* collect_server_row() {
+    // result row
+    static server_row info;
+
+    // temp containers for addrs
+    char my_ip_addr[NI_MAXHOST];
+    char my_ip6_addr[NI_MAXHOST];
+
+    info.host_name = collect_hostname();
+    info.ip_addr = get_IP_addr(my_ip_addr, AF_INET);
+    info.ip6_addr = get_IP_addr(my_ip6_addr, AF_INET6);
+
+    // MHz
+    info.CPU_scale = collect_cpu(); 
+
+    // KB
+    info.avail_RAM = collect_ram();
+    info.avail_disk = collect_disk();
+    info.core_num = collect_procs();
+
+    // KB/s
+    info.NIC_load = collect_nicload();
+    info.CPU_temp = collect_cputemp(); 
+
+    struct tm* my_time;
+    my_time = collect_currenttime();
+    info.curr_time = get_mysqltime(my_time); 
+
+    return &info;
+} 
 
 /**
 int main() {

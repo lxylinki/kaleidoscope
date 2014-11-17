@@ -10,12 +10,8 @@ EXE_DIR=../bin/
 SQL_INCS=${shell mysql_config --include}
 SQL_LIBS=${shell mysql_config --libs}
 
-obs: lc_samp.o sql_table.o bw_funcs.o
-libs: lc_samp.a
-execs: lc_samp sql_table bw_funcs
-
 lc_samp.o: lc_samp.c
-	${CC} -c lc_samp.c
+	${CC} ${CFLAGS} ${SQL_INCS} -c lc_samp.c
 
 sql_table.o: sql_table.c
 	${CC} ${CFLAGS} ${SQL_INCS} -c sql_table.c
@@ -29,14 +25,11 @@ bw_funcs: bw_funcs.c
 peer_conn.o: peer_conn.c
 	${CC} ${SQL_INCS} -c peer_conn.c
 
-
 util_funcs.a: lc_samp.o peer_conn.o
 	${AR} ${AROPTS} ${LIB_DIR}util_funcs.a lc_samp.o peer_conn.o
 
-app_start: app_start.c
+app_start: app_start.c util_funcs.a
 	${CC} ${CFLAGS} ${SQL_INCS} -o ${EXE_DIR}app_start app_start.c ${LIB_DIR}util_funcs.a ${SQL_LIBS}
 
 clean:
-	rm -f lc_samp 
-	rm -f sql_table
 	rm -f *.~ .*.swp *.o *.a

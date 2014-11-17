@@ -17,7 +17,7 @@
 #define CREATE_DATA_TABLE "create table data( email varchar(80), srcProg_ID int,dstProg_ID int, label varchar(80), volume int, format varchar(80),curr_time DATETIME, primary key(label, format, curr_time), foreign key(email) references user(email) )"
 
 /* create server table */
-#define CREATE_SERVER_TABLE "create table server( host_name varchar(80),CPU_scale float, avail_RAM int, avail_disk int, CPU_temp float,NIC_load float, curr_time DATETIME, IPv6_addr varchar(80),CPU_capacity float,core_num int, IP_addr varchar(80), primary key( host_name, curr_time, IPv6_addr ) )"
+#define CREATE_SERVER_TABLE "create table server( host_name varchar(80),CPU_scale float, avail_RAM int, avail_disk int, CPU_temp float,NIC_load float, curr_time DATETIME, IPv6_addr varchar(80),core_num int, IP_addr varchar(80), primary key( curr_time, IPv6_addr ) )"
 
 /* create exec_on table, relate program to server */
 #define CREATE_EXECON_TABLE "create table exec_on( prog_ID int, host_name varchar(80), curr_time DATETIME, primary key( prog_ID, curr_time ), foreign key (host_name) references server (host_name) )"

@@ -53,7 +53,7 @@ int family_to_level( int family );
 int sockfd_to_family( int sockfd );
 
 /* start sending and unicasting*/
-void daemon_process(const char* peeraddr, int interval);
+void conn_process(const char* peeraddr, int interval);
 
 /* _PEER_CONN_H_ */
 #endif 
