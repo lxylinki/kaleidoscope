@@ -13,6 +13,7 @@
 
 #include "../include/lc_samp.h"
 #include "../include/sql_admin.h"
+#include "../include/my_hosts.h"
 
 #define CPORT "20121" /* progressive port number: sending periodically signals */
 

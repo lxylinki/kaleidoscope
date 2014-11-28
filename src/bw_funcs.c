@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
 #include "../iperf/iperf.h"
 #include "../iperf/iperf_api.h"
 
@@ -103,6 +104,7 @@ int main( int argc, char *argv[] ){
     /* run the client side alg iterate through each remote peer recorded */
     //TODO: the peer hostname is selected from peer_connect table
     bw_client("10.0.0.15");
+    bw_client("localhost");
     return 0;
 }
 

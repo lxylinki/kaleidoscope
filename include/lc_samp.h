@@ -5,7 +5,6 @@
 typedef struct server_sample {
     char* host_name;
     char* ip_addr;
-//    char* mac_addr;
     char* ip6_addr;
     float CPU_scale;
     long avail_RAM;
