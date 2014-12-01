@@ -3,16 +3,16 @@
 #ifndef _VIZ_HOSTS_h_
 #define _VIZ_HOSTS_h_
 
-#define node27 10.1.1.17
-#define node28 10.1.1.18
-#define node29 10.1.1.19
-#define node30 10.1.1.20
-#define node31 10.1.1.21
-#define node32 10.1.1.22
-#define node33 10.1.1.23
-#define node34 10.1.1.24
-#define node35 10.1.1.25
-#define node36 10.1.1.26
+#define node17 10.1.1.17
+#define node18 10.1.1.18
+#define node19 10.1.1.19
+#define node20 10.1.1.20
+#define node21 10.1.1.21
+#define node22 10.1.1.22
+#define node23 10.1.1.23
+#define node24 10.1.1.24
+#define node25 10.1.1.25
+#define node26 10.1.1.26
 
 #define node27 10.1.1.27
 #define node28 10.1.1.28

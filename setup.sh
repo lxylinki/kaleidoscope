@@ -1,5 +1,4 @@
 #!/bin/bash
-#firewall-cmd --add-port 5201/tcp
-#firewall-cmd --add-port 20121/udp
-#firewall-cmd --add-port 20132/udp
-
+iptables -A INPUT -p tcp -m tcp --dport 5201 -j ACCEPT
+iptables -A INPUT -p udp -m udp --dport 20121 -j ACCEPT
+iptables -A INPUT -p udp -m udp --dport 20132 -j ACCEPT

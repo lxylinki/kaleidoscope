@@ -340,8 +340,8 @@ server_row* collect_server_row() {
     char my_ip6_addr[NI_MAXHOST];
 
     info.host_name = collect_hostname();
-    info.ip_addr = get_IP_addr(my_ip_addr, AF_INET);
     info.ip6_addr = get_IP_addr(my_ip6_addr, AF_INET6);
+    info.ip_addr = get_IP_addr(my_ip_addr, AF_INET);
 
     // MHz
     info.CPU_scale = collect_cpu(); 
