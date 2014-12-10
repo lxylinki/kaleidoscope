@@ -147,7 +147,6 @@ void local_process(int total_samples) {
 }
 
 int main() {
-    local_process(2);
-    //conn_process("127.0.0.1", 3);
+    local_process(20);
     exit(EXIT_SUCCESS);
 }

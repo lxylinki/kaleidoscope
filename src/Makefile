@@ -24,7 +24,7 @@ sql_table: sql_table.o
 	${CC} ${CFLAGS} ${SQL_INCS} -o ${EXE_DIR}sql_table sql_table.c ${SQL_LIBS}
 
 bw_funcs: bw_funcs.c
-	${CC} ${CFLAGS} -L${LIB_DIR} -o ${EXE_DIR}bw_funcs bw_funcs.c ${LIB_DIR}libiperf.a
+	${CC} ${CFLAGS} ${SQL_INCS} -L${LIB_DIR} -o ${EXE_DIR}bw_funcs bw_funcs.c ${SQL_LIBS} ${LIB_DIR}libiperf.a
 
 peer_conn.o: peer_conn.c
 	${CC} ${SQL_INCS} -c peer_conn.c

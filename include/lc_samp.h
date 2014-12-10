@@ -12,7 +12,7 @@ typedef struct server_sample {
     float NIC_load;
     float CPU_temp;
 //    struct tm* curr_time;
-    MYSQL_TIME *curr_time;
+    MYSQL_TIME* curr_time;
 //    float CPU_capacity;
     int core_num;
 } server_row;
