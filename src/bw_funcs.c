@@ -21,7 +21,7 @@ static int peer_columns = 4;
 
 /* Static information about localhost's peers */
 static int peer_num = 2;
-static char* mypeers[] = {"10.0.0.15", "localhost"};
+static char* mypeers[] = {"localhost","10.0.0.12"};
 static char* peer_names[] = {"snowy", "kaleidoscope"};
 
 /* convert into mysql time */
@@ -263,7 +263,7 @@ int main( int argc, char *argv[] ){
 
     /* run the client side alg iterate through each remote peer recorded */
     //TODO: the peer hostname is selected from peer_connect table
-    conn_process(10);
+    conn_process(50);
     exit (EXIT_SUCCESS);
 }
 

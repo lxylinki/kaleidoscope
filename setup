@@ -1,0 +1,21 @@
+#!/bin/bash
+# compile steps
+cd ./iperf
+./iperf_lib
+cd ..
+cd ./src
+make clean
+make objs
+make execs
+cd ..
+
+# firewall rules
+sudo iptables -A INPUT -p tcp -m tcp --dport 5201 -j ACCEPT
+sudo iptables -A INPUT -p udp -m udp --dport 20121 -j ACCEPT
+sudo iptables -A INPUT -p udp -m udp --dport 20132 -j ACCEPT
+
+# uncomment if your system use firewall-cmd
+#sudo firewall-cmd --add-port 5201/tcp
+#sudo firewall-cmd --add-port 20121/udp
+#sudo firewall-cmd --add-port 20132/udp
+
