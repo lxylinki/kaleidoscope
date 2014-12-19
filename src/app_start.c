@@ -11,6 +11,7 @@
 
 #define SERVER_INSERT_STMT "insert into server(host_name,CPU_scale,avail_RAM,avail_disk,CPU_temp,NIC_load,curr_time,IPv6_addr,core_num,IP_addr) values(?,?,?,?,?,?,?,?,?,?)"
 
+// need to be > 2 since measuring network data rate needs 2 seconds
 #define GLOBAL_INTERVAL 5
 
 static int server_columns = 10;
